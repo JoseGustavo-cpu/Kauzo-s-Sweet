@@ -1,7 +1,7 @@
 window.KAUZOS_DATA = {
   whatsapp: "5515988440436",
   instagram: "kauzos_sweet",
-  payments: ["Pix (confirmar com a loja)", "Dinheiro (confirmar com a loja)", "Cartão (confirmar com a loja)"],
+  payments: ["Pix", "Dinheiro", "Cartão de débito", "Cartão de crédito"],
   products: [
     {id:"m1",name:"Mousse",description:"Cremoso e cheio de sabor.",price:8,flavors:["Morango"],image:"assets/mousse-morango.jpg",active:true},
     {id:"m2",name:"Mousse",description:"Cremoso e cheio de sabor.",price:8,flavors:["Limão"],image:"assets/mousse-limao.jpg",active:true},

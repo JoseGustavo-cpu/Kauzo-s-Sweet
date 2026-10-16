@@ -32,7 +32,16 @@ $('send').onclick=()=>{
   window.open('https://wa.me/'+phone+'?text='+encodeURIComponent(msg),'_blank','noopener,noreferrer');
 };
 function showAdmin(){$('admin').classList.add('show');$('editPhone').value=data.whatsapp;$('editInsta').value=data.instagram;$('editPayments').value=(data.payments||[]).join(', ');renderAdmin();$('admin').scrollIntoView({behavior:'smooth'})}
-$('openAdmin').onclick=showAdmin;$('closeAdmin').onclick=()=>$('admin').classList.remove('show');
+async function requestAdminAccess(){
+  const password=prompt('Área administrativa da Kauzo’s Sweet\nDigite a senha para editar o cardápio:');
+  if(password===null)return;
+  const bytes=new TextEncoder().encode(password);
+  const digest=await crypto.subtle.digest('SHA-256',bytes);
+  const hex=Array.from(new Uint8Array(digest)).map(b=>b.toString(16).padStart(2,'0')).join('');
+  if(hex==='e79e6f464cfb345b8d75956a43108b642232759c32fc711212f098a80aae0091'){showAdmin();}else{alert('Senha incorreta.');}
+}
+$('openAdmin').onclick=()=>{requestAdminAccess().catch(()=>alert('Não foi possível verificar a senha neste navegador.'));};
+$('closeAdmin').onclick=()=>$('admin').classList.remove('show');
 function renderAdmin(){$('adminProducts').innerHTML=data.products.map((p,n)=>`<div class="admin-item" data-item="${n}"><div class="row"><strong>Produto ${n+1}</strong><button class="btn secondary" data-remove="${n}">Excluir</button></div><div class="fields"><div><label>Nome</label><input data-field="name" value="${escapeHtml(p.name)}"></div><div><label>Preço (R$)</label><input data-field="price" type="number" min="0" step="0.01" value="${p.price}"></div><div><label>Sabores (separados por vírgula)</label><input data-field="flavors" value="${escapeHtml((p.flavors||[]).join(', '))}"></div><div><label>Descrição</label><input data-field="description" value="${escapeHtml(p.description||'')}"></div></div><div class="fields"><div><label>Foto do produto (JPG, PNG ou WebP)</label><input type="file" accept="image/jpeg,image/png,image/webp" data-photo="${n}"></div><div><label><input type="checkbox" data-active="${n}" ${p.active!==false?'checked':''}> Mostrar no cardápio</label>${p.image?`<img src="${escapeHtml(p.image)}" alt="Foto atual">`:''}</div></div></div>`).join('');document.querySelectorAll('[data-remove]').forEach(b=>b.onclick=()=>{syncAdminFields();if(confirm('Excluir este produto?')){data.products.splice(+b.dataset.remove,1);renderAdmin()}});document.querySelectorAll('[data-photo]').forEach(input=>input.onchange=async()=>{const file=input.files[0];if(!file)return;if(file.size>2*1024*1024){alert('Escolha uma foto de até 2 MB para esta versão.');input.value='';return}const image=await new Promise((resolve,reject)=>{let r=new FileReader;r.onload=()=>resolve(r.result);r.onerror=reject;r.readAsDataURL(file)});syncAdminFields();data.products[+input.dataset.photo].image=image;renderAdmin()})}
 function syncAdminFields(){document.querySelectorAll('[data-item]').forEach(el=>{let p=data.products[+el.dataset.item];if(!p)return;el.querySelectorAll('[data-field]').forEach(input=>{let f=input.dataset.field;if(f==='price')p.price=Math.max(0,Number(input.value)||0);else if(f==='flavors')p.flavors=input.value.split(',').map(s=>s.trim()).filter(Boolean);else p[f]=input.value});p.active=el.querySelector('[data-active]').checked})}
 $('newProduct').onclick=()=>{syncAdminFields();data.products.push({id:'p'+Date.now(),name:'Novo doce',price:0,description:'',flavors:['Tradicional'],image:'',active:true});renderAdmin()};
